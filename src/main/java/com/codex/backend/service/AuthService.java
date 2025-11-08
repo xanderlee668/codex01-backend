@@ -47,13 +47,30 @@ public class AuthService {
     }
 
     public AuthResponse authenticate(LoginRequest request) {
+        System.out.println("🧩 尝试登录邮箱: " + request.email());
+        System.out.println("🧩 尝试登录密码: " + request.password());
+
+        // 打印数据库中是否存在该用户，以及密码匹配结果
+        userRepository.findByEmail(request.email())
+                .ifPresentOrElse(
+                        u -> {
+                            System.out.println("🧩 数据库哈希: " + u.getPasswordHash());
+                            System.out.println("🧩 匹配结果: " + passwordEncoder.matches(request.password(), u.getPasswordHash()));
+                        },
+                        () -> System.out.println("🧩 用户不存在！")
+                );
+
+        // 正式认证逻辑
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password()));
+                new UsernamePasswordAuthenticationToken(request.email(), request.password())
+        );
+
         AuthenticatedUser authenticatedUser = (AuthenticatedUser) authentication.getPrincipal();
         User user = authenticatedUser.getUser();
         String token = jwtTokenProvider.generateToken(user.getId(), user.getEmail());
         return new AuthResponse(token, new AuthResponse.UserSummary(user.getId(), user.getEmail(), user.getDisplayName()));
     }
+
 
     public User requireUser(Long id) {
         return userRepository

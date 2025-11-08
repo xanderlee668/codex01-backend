@@ -1,8 +1,12 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/codex?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: codex
-    password: codexpass
+    url: jdbc:h2:mem:codexdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true  # 启用网页控制台 localhost:8080/h2-console
   jpa:
     hibernate:
       ddl-auto: update
@@ -10,13 +14,14 @@ spring:
       hibernate:
         format_sql: true
     open-in-view: false
+    defer-datasource-initialization: true   # ✅ 必加！确保建表后再执行 data.sql
   jackson:
     property-naming-strategy: SNAKE_CASE
 
 jwt:
   issuer: ${JWT_ISSUER:codex01-backend}
   expiration: ${JWT_EXPIRATION:PT2H}
-  secret: ${JWT_SECRET:change-me-in-production}
+  secret: ${JWT_SECRET:change-me-in-production-very-long-and-secure-key}
 
 server:
   port: 8080

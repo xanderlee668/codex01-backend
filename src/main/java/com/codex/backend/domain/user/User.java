@@ -36,6 +36,10 @@ public class User extends BaseEntity {
         return passwordHash;
     }
 
+    public String getPassword() {
+        return passwordHash;
+    }
+
     public String getDisplayName() {
         return displayName;
     }
