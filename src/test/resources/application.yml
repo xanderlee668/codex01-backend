@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+  main:
+    allow-bean-definition-overriding: true
+
+jwt:
+  issuer: test-issuer
+  expiration: PT1H
+  secret: 0123456789ABCDEF0123456789ABCDEF
