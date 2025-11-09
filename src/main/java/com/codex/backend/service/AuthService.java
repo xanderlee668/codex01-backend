@@ -7,6 +7,9 @@ import com.codex.backend.security.UserDetailsServiceImpl.AuthenticatedUser;
 import com.codex.backend.web.dto.AuthResponse;
 import com.codex.backend.web.dto.LoginRequest;
 import com.codex.backend.web.dto.RegisterRequest;
+import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,8 +19,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * 鉴权业务逻辑：负责处理注册、登录与用户信息映射。
+ */
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -35,46 +43,52 @@ public class AuthService {
         this.authenticationManager = authenticationManager;
     }
 
+    /**
+     * 注册用户并立即生成访问令牌，字段与 iOS 端要求完全一致。
+     */
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
         }
-        User user = new User(request.email(), passwordEncoder.encode(request.password()), request.displayName());
+        User user = new User(
+                request.email(),
+                passwordEncoder.encode(request.password()),
+                request.displayName(),
+                "",
+                "",
+                0.0,
+                0);
         User saved = userRepository.save(user);
         String token = jwtTokenProvider.generateToken(saved.getId(), saved.getEmail());
-        return new AuthResponse(token, new AuthResponse.UserSummary(saved.getId(), saved.getEmail(), saved.getDisplayName()));
+        return new AuthResponse(token, toPayload(saved));
     }
 
+    /**
+     * 登录校验，成功后返回 JWT + 用户信息。
+     */
     public AuthResponse authenticate(LoginRequest request) {
-        System.out.println("🧩 尝试登录邮箱: " + request.email());
-        System.out.println("🧩 尝试登录密码: " + request.password());
-
-        // 打印数据库中是否存在该用户，以及密码匹配结果
-        userRepository.findByEmail(request.email())
-                .ifPresentOrElse(
-                        u -> {
-                            System.out.println("🧩 数据库哈希: " + u.getPasswordHash());
-                            System.out.println("🧩 匹配结果: " + passwordEncoder.matches(request.password(), u.getPasswordHash()));
-                        },
-                        () -> System.out.println("🧩 用户不存在！")
-                );
-
-        // 正式认证逻辑
+        log.debug("Attempting authentication for email: {}", request.email());
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password())
-        );
-
+                new UsernamePasswordAuthenticationToken(request.email(), request.password()));
         AuthenticatedUser authenticatedUser = (AuthenticatedUser) authentication.getPrincipal();
         User user = authenticatedUser.getUser();
         String token = jwtTokenProvider.generateToken(user.getId(), user.getEmail());
-        return new AuthResponse(token, new AuthResponse.UserSummary(user.getId(), user.getEmail(), user.getDisplayName()));
+        return new AuthResponse(token, toPayload(user));
     }
 
-
-    public User requireUser(Long id) {
-        return userRepository
-                .findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    /**
+     * 将用户实体转换为对接 iOS 的响应结构。
+     */
+    public AuthResponse.UserPayload toPayload(User user) {
+        UUID id = user.getId();
+        return new AuthResponse.UserPayload(
+                id != null ? id.toString() : null,
+                user.getEmail(),
+                user.getDisplayName(),
+                user.getLocation() != null ? user.getLocation() : "",
+                user.getBio() != null ? user.getBio() : "",
+                user.getRating(),
+                user.getDealsCount());
     }
 }
