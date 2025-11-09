@@ -49,6 +49,7 @@ public class MessageService {
      */
     @Transactional(readOnly = true)
     public List<MessageThreadResponse> listThreads(User user) {
+        // MarketplaceViewModel 会按照 updated_at 值倒序刷新站内信列表，这里保持相同排序。
         return messageThreadRepository
                 .findByBuyerOrSellerOrderByUpdatedAtDesc(user, user)
                 .stream()
@@ -84,6 +85,7 @@ public class MessageService {
         if (listing.getSeller().equals(buyer)) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot message yourself");
         }
+        // iOS 端对于同一个 Listing 仅维护一条买家和卖家的会话，这里沿用该策略复用旧线程。
         MessageThread thread = messageThreadRepository
                 .findByBuyerOrSellerOrderByUpdatedAtDesc(buyer, buyer)
                 .stream()
@@ -97,6 +99,8 @@ public class MessageService {
         Message message = messageRepository.save(new Message(thread, buyer, request.message()));
         thread.getMessages().add(message);
         thread.touch();
+        // 持久化最新的 updated_at，前端会根据该字段刷新站内信列表排序。
+        messageThreadRepository.save(thread);
         return toResponse(thread, buyer);
     }
 
@@ -111,6 +115,8 @@ public class MessageService {
         Message saved = messageRepository.save(new Message(thread, sender, request.content()));
         thread.getMessages().add(saved);
         thread.touch();
+        // 同步更新会话的更新时间，确保与 iOS 端的最新消息排序保持一致。
+        messageThreadRepository.save(thread);
         return toResponse(thread, sender);
     }
 
@@ -121,6 +127,7 @@ public class MessageService {
         MessageThreadResponse.ParticipantResponse buyer = toParticipant(thread.getBuyer());
         MessageThreadResponse.ParticipantResponse seller = toParticipant(thread.getSeller());
         List<MessageThreadResponse.MessageResponse> messages = thread.getMessages().stream()
+                // Swift `ThreadDetailView` 直接渲染消息数组，保持原始顺序与字段命名。
                 .map(message -> new MessageThreadResponse.MessageResponse(
                         message.getId().toString(),
                         message.getSender().getId().toString(),
@@ -140,6 +147,7 @@ public class MessageService {
 
     private MessageThreadResponse.ParticipantResponse toParticipant(User user) {
         AuthResponse.UserPayload payload = authService.toPayload(user);
+        // 前端的 buyer/seller 节点直接复用 AuthResponse 字段，保持原有含义。
         return new MessageThreadResponse.ParticipantResponse(
                 payload.userId(), payload.displayName(), payload.rating(), payload.dealsCount());
     }

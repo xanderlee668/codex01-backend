@@ -57,6 +57,7 @@ public class FavoriteService {
                 .findByUserAndListing(user, listing)
                 .orElseGet(() -> favoriteRepository.save(new Favorite(user, listing)));
         favorite.setArchived(false);
+        // 立即返回最新收藏状态，供前端同步收藏图标与线程状态。
         return toResponse(favorite);
     }
 
@@ -76,6 +77,7 @@ public class FavoriteService {
     private FavoriteResponse toResponse(Favorite favorite) {
         Listing listing = favorite.getListing();
         ListingResponse listingResponse = listingService.toResponse(listing, true);
+        // FavoritesView 直接消费 listing 节点，这里沿用 ListingResponse 结构。
         return new FavoriteResponse(
                 favorite.getId().toString(),
                 listingResponse,

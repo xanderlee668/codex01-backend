@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,13 +41,15 @@ public class ListingService {
      */
     @Transactional(readOnly = true)
     public List<ListingResponse> fetchAll(User user) {
-        List<Listing> listings = listingRepository.findAll();
+        // iOS 端会把最新发布的放在顶部，这里按 created_at 倒序返回。
+        List<Listing> listings = listingRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
         if (user == null) {
             return listings.stream().map(listing -> toResponse(listing, listing.isFavorite())).toList();
         }
         Set<UUID> favoriteIds = favoriteRepository
                 .findByUserAndArchivedFalseOrderByCreatedAtDesc(user)
                 .stream()
+                // 前端需要根据 is_favorite 渲染收藏状态，这里预计算当前用户的收藏集合。
                 .map(favorite -> favorite.getListing().getId())
                 .collect(Collectors.toSet());
         return listings.stream()
@@ -60,6 +63,7 @@ public class ListingService {
      */
     @Transactional
     public ListingResponse create(User seller, CreateListingRequest request) {
+        // CreateListingRequest 对应前端发布表单字段，保持逐一映射。
         Listing listing = new Listing(
                 request.title(),
                 request.description(),
@@ -76,6 +80,7 @@ public class ListingService {
 
     public ListingResponse toResponse(Listing listing, boolean favorite) {
         AuthResponse.UserPayload sellerPayload = authService.toPayload(listing.getSeller());
+        // Swift 端直接映射该结构到 ListingViewModel，因此字段名/含义保持 1:1。
         return new ListingResponse(
                 toStringId(listing.getId()),
                 listing.getTitle(),

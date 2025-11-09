@@ -49,4 +49,11 @@ public abstract class BaseEntity {
     public Instant getUpdatedAt() {
         return updatedAt;
     }
+
+    /**
+     * 提供给子类在业务层手动刷新更新时间，便于对接前端的最新排序逻辑。
+     */
+    protected void markUpdated() {
+        this.updatedAt = Instant.now();
+    }
 }

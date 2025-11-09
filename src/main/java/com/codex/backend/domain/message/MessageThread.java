@@ -90,6 +90,7 @@ public class MessageThread extends BaseEntity {
      * 轻量触发一次更新，便于刷新 `updated_at` 时间戳。
      */
     public void touch() {
-        this.archived = this.archived;
+        // 与前端的会话更新时间对齐：每次有新消息都刷新 updated_at，便于列表按最新排序。
+        markUpdated();
     }
 }
