@@ -7,6 +7,8 @@ import com.codex.backend.security.UserDetailsServiceImpl.AuthenticatedUser;
 import com.codex.backend.web.dto.AuthResponse;
 import com.codex.backend.web.dto.LoginRequest;
 import com.codex.backend.web.dto.RegisterRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,8 +18,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * 登录/注册业务逻辑，封装用户校验、密码加密、JWT 生成等流程。
+ */
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -35,6 +42,9 @@ public class AuthService {
         this.authenticationManager = authenticationManager;
     }
 
+    /**
+     * 注册用户并立即生成访问令牌。
+     */
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
@@ -46,21 +56,11 @@ public class AuthService {
         return new AuthResponse(token, new AuthResponse.UserSummary(saved.getId(), saved.getEmail(), saved.getDisplayName()));
     }
 
+    /**
+     * 校验登录凭证并返回访问令牌。
+     */
     public AuthResponse authenticate(LoginRequest request) {
-        System.out.println("🧩 尝试登录邮箱: " + request.email());
-        System.out.println("🧩 尝试登录密码: " + request.password());
-
-        // 打印数据库中是否存在该用户，以及密码匹配结果
-        userRepository.findByEmail(request.email())
-                .ifPresentOrElse(
-                        u -> {
-                            System.out.println("🧩 数据库哈希: " + u.getPasswordHash());
-                            System.out.println("🧩 匹配结果: " + passwordEncoder.matches(request.password(), u.getPasswordHash()));
-                        },
-                        () -> System.out.println("🧩 用户不存在！")
-                );
-
-        // 正式认证逻辑
+        log.debug("Attempting authentication for email: {}", request.email());
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
@@ -71,10 +71,4 @@ public class AuthService {
         return new AuthResponse(token, new AuthResponse.UserSummary(user.getId(), user.getEmail(), user.getDisplayName()));
     }
 
-
-    public User requireUser(Long id) {
-        return userRepository
-                .findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-    }
 }

@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
-    List<Task> findAllByOwnerOrderByCreatedAtDesc(User owner);
+    List<Task> findAllByOwner(User owner);
+
     Optional<Task> findByIdAndOwner(Long id, User owner);
 }
