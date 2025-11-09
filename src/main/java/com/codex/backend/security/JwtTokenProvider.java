@@ -10,6 +10,7 @@ import java.security.Key;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
+import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -25,7 +26,7 @@ public class JwtTokenProvider {
         this.expiration = Duration.parse(properties.getExpiration());
     }
 
-    public String generateToken(Long userId, String email) {
+    public String generateToken(UUID userId, String email) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .setSubject(userId.toString())
@@ -46,9 +47,9 @@ public class JwtTokenProvider {
         }
     }
 
-    public Long extractUserId(String token) {
+    public UUID extractUserId(String token) {
         Claims claims = parseClaims(token);
-        return Long.parseLong(claims.getSubject());
+        return UUID.fromString(claims.getSubject());
     }
 
     private Claims parseClaims(String token) {

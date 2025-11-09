@@ -1,84 +1,110 @@
 # Codex01 Backend
 
-基于 Spring Boot、MySQL 和 JWT 的 RESTful 后端服务，实现用户注册/登录与任务管理能力，供 iOS 客户端后续对接。
+基于 Spring Boot 3、Spring Security + JWT 与 JPA 实现的 RESTful 后端，用于为 iOS 项目 [codex01](https://github.com/xanderlee668/codex01) 提供真实接口。
 
-## 功能概述
+- ✅ 所有端点统一挂载在 `/api` 前缀下，返回 JSON 且字段均为 `snake_case`。
+- ✅ 登录成功返回 JWT，后续请求需携带 `Authorization: Bearer <token>`。
+- ✅ 与前端 `APIClient`、`SampleData` 一致的数据模型，开箱即用完成登录、注册、会话恢复、雪板列表查询与发布流程。
 
-- 用户注册：邮箱唯一性校验、BCrypt 密码加密、注册成功后返回访问令牌。
-- 用户登录：用户名/密码认证，通过 JWT 为后续请求提供授权头。
-- 任务管理：基于用户的任务列表查询、创建、查看详情、更新、删除。
-- 统一异常响应：验证失败与业务异常提供结构化 JSON 反馈。
-- CORS 全局配置，方便移动端或 Web 端跨域访问。
-- Actuator 健康检查端点，便于部署环境探活。
-
-## 项目结构
-
-```
-src/
-  main/java/com/codex/backend/
-    config/        # JWT 与 CORS 配置
-    domain/        # JPA 实体
-    repository/    # 数据访问层
-    security/      # JWT & Spring Security 相关组件
-    service/       # 业务逻辑与映射
-    web/           # REST 控制器与异常处理
-  main/resources/
-    application.yml
-```
-
-## 开发环境准备
-
-1. 安装 Java 17、Maven 3.9+。
-2. 准备 MySQL 数据库，并在 `src/main/resources/application.yml` 中配置连接信息（默认使用数据库 `codex`，用户名 `codex`、密码 `codexpass`）。
-3. 执行数据库中用户创建示例：
-
-```sql
-CREATE DATABASE IF NOT EXISTS codex;
-CREATE USER 'codex'@'%' IDENTIFIED BY 'codexpass';
-GRANT ALL PRIVILEGES ON codex.* TO 'codex'@'%';
-FLUSH PRIVILEGES;
-```
-
-## 运行
+## 快速开始
 
 ```bash
 mvn spring-boot:run
 ```
 
-应用启动后主要接口：
+应用启动后会自动创建示例账号（`admin@admin.com` / `12345678`）以及两条雪板 Listing，方便直接联调。
 
-- `POST /api/auth/register`：注册用户。
-- `POST /api/auth/login`：登录并获取 JWT。
-- `GET /api/tasks`：获取当前用户任务列表。
-- `POST /api/tasks`：创建任务。
-- `GET /api/tasks/{id}`：获取单个任务。
-- `PUT /api/tasks/{id}`：更新任务。
-- `DELETE /api/tasks/{id}`：删除任务。
+## 主要端点
 
-请求需要在 `Authorization` 头中携带 `Bearer <token>`。
+### 鉴权模块 `/api/auth`
 
-## 测试
+| 方法 | 路径 | 说明 |
+| ---- | ---- | ---- |
+| `POST` | `/api/auth/register` | 注册新用户并直接返回 token + user 结构。 |
+| `POST` | `/api/auth/login` | 校验邮箱+密码后返回 token + user。 |
+| `GET` | `/api/auth/me` | 使用 JWT 恢复当前会话，返回 user 结构。 |
 
-```bash
-mvn test
+#### 响应结构
+
+```json
+{
+  "token": "<JWT>",
+  "user": {
+    "user_id": "uuid",
+    "email": "user@example.com",
+    "display_name": "Snow Rider",
+    "location": "London",
+    "bio": "热爱单板",
+    "rating": 4.8,
+    "deals_count": 12
+  }
+}
 ```
 
-## Docker 部署
+- 注册请求体：`{"email":"user@example.com","password":"123456","display_name":"Snow Rider"}`
+- 登录请求体：`{"email":"user@example.com","password":"123456"}`
+- `GET /api/auth/me` 仅返回 `{"user": { ... 同上 ... }}`。
 
-提供了 `Dockerfile` 与 `docker-compose.yml` 便于在云服务器部署：
+### 雪板列表模块 `/api/listings`
 
-1. 构建镜像：
+| 方法 | 路径 | 说明 |
+| ---- | ---- | ---- |
+| `GET` | `/api/listings` | 返回所有雪板 Listing，字段与前端枚举、节点完全一致。需 JWT。 |
+| `POST` | `/api/listings` | 发布雪板 Listing，后端自动写入 seller 信息并返回完整实体。需 JWT。 |
 
-   ```bash
-   docker build -t codex01-backend .
-   ```
+#### Listing 响应示例
 
-2. 使用 Docker Compose 一键启动应用与 MySQL：
+```json
+{
+  "listing_id": "uuid",
+  "title": "Burton Custom X",
+  "description": "轻度使用，附送固定器",
+  "condition": "like_new",
+  "price": 450.0,
+  "location": "London",
+  "trade_option": "face_to_face",
+  "is_favorite": false,
+  "image_url": "https://.../board.jpg",
+  "seller": {
+    "seller_id": "uuid",
+    "display_name": "Admin Rider",
+    "rating": 4.9,
+    "deals_count": 32
+  }
+}
+```
 
-   ```bash
-   docker compose up -d
-   ```
+#### 发布请求示例
 
-   Compose 文件包含数据库初始化环境变量，默认暴露应用 8080 端口。
+```json
+{
+  "title": "Jones Mountain Twin",
+  "description": "保养良好，含原装滑雪包",
+  "condition": "good",
+  "price": 380.0,
+  "location": "Innsbruck",
+  "trade_option": "courier",
+  "is_favorite": false,
+  "image_url": "https://.../mountain-twin.jpg"
+}
+```
 
-部署前请修改 `application.yml`、环境变量及 `jwt.secret` 等敏感配置。
+若校验失败、枚举取值不合法或未携带 JWT，接口会返回如下错误结构：
+
+```json
+{
+  "message": "错误提示",
+  "errors": {
+    "price": "must be greater than or equal to 0.0"
+  }
+}
+```
+
+## 数据模型
+
+- **User**：邮箱、密码哈希、展示昵称、所在地、个人简介、评分与成交次数。
+- **Listing**：标题、描述、成色(`new/like_new/good/worn`)、价格、所在地、交易方式(`face_to_face/courier/hybrid`)、收藏状态、图片地址与卖家信息。
+
+## 进一步扩展
+
+当前代码已按照前端现有需求完成接口对接。若后续要实现收藏、私信或行程等模块，可在现有安全框架上继续增加 `/api/favorites`、`/api/messages`、`/api/trips` 等端点，并复用统一的错误响应及 snake_case 配置。
