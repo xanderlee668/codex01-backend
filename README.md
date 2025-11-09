@@ -49,13 +49,60 @@ mvn spring-boot:run
 
 - `POST /api/auth/register`：注册用户。
 - `POST /api/auth/login`：登录并获取 JWT。
-- `GET /api/tasks`：获取当前用户任务列表。
+- `GET /api/tasks`：获取当前用户任务列表，支持 `completed`、`due_from`、`due_to`、`keyword`、`category`、`priority`、`tag` 等筛选参数。
 - `POST /api/tasks`：创建任务。
 - `GET /api/tasks/{id}`：获取单个任务。
 - `PUT /api/tasks/{id}`：更新任务。
 - `DELETE /api/tasks/{id}`：删除任务。
+- `GET /api/tasks/summary`：统计任务数量、完成情况与提醒数。
+- `GET /api/dashboard`：返回首页所需的聚合数据（统计、分类进度、今日/即将任务、快捷入口）。
+- `GET /api/users/me`：获取当前登录用户资料。
+- `PUT /api/users/me`：更新当前登录用户昵称。
 
 请求需要在 `Authorization` 头中携带 `Bearer <token>`。
+
+## API 对接说明
+
+所有请求与响应均为 `application/json`，字段命名为 `snake_case`，与前端仓库 [codex01](https://github.com/xanderlee668/codex01) 中 `APIClient`、`SampleData` 的结构完全一致。
+
+### 鉴权
+
+| 接口 | 请求体 | 响应体 |
+| ---- | ------ | ------ |
+| `POST /api/auth/register` | `{ "email": "user@example.com", "password": "******", "display_name": "昵称" }` | `{ "token": "JWT", "user": { "id": 1, "email": "user@example.com", "display_name": "昵称" } }` |
+| `POST /api/auth/login` | `{ "email": "user@example.com", "password": "******" }` | 同上 |
+
+### 任务
+
+| 接口 | 说明 |
+| ---- | ---- |
+| `GET /api/tasks` | 返回任务数组，字段包括 `id`, `title`, `description`, `category`, `priority`, `due_date`, `estimated_minutes`, `tags`, `completed`, `created_at`, `updated_at`。支持查询参数 `completed`, `due_from`, `due_to`, `keyword`, `category`, `priority`, `tag`。|
+| `POST /api/tasks` | 请求体字段与上表一致，返回新任务。|
+| `GET /api/tasks/{id}` | 返回单个任务。|
+| `PUT /api/tasks/{id}` | 请求体字段与创建相同，返回更新后的任务。|
+| `DELETE /api/tasks/{id}` | 删除任务，响应 204。|
+| `GET /api/tasks/summary` | 返回 `{ "total_tasks": 6, "completed_tasks": 2, "overdue_tasks": 0, "due_today_tasks": 1, "focus_minutes": 180, "completion_rate": 0.33 }`。|
+
+### 首页 Dashboard
+
+`GET /api/dashboard` 返回结构：
+
+```json
+{
+  "summary": { "total_tasks": 6, "completed_tasks": 2, "overdue_tasks": 0, "due_today_tasks": 1, "focus_minutes": 180, "completion_rate": 0.33 },
+  "projects": [{ "category": "Design", "total_tasks": 2, "completed_tasks": 1, "remaining_tasks": 1, "progress": 0.5, "theme_color": "#F97316" }],
+  "today_tasks": [/* 今日任务数组，与 tasks 字段结构一致 */],
+  "upcoming_tasks": [/* 未来 7 天内未完成任务 */],
+  "quick_links": [{ "id": "start_focus", "title": "开始专注", "icon": "timer", "target": "focus" }]
+}
+```
+
+### 用户资料
+
+| 接口 | 请求体 | 响应体 |
+| ---- | ------ | ------ |
+| `GET /api/users/me` | 无 | `{ "id": 1, "email": "user@example.com", "display_name": "昵称", "created_at": "2024-01-01T00:00:00Z" }` |
+| `PUT /api/users/me` | `{ "display_name": "新昵称" }` | 同 `GET /api/users/me` |
 
 ## 测试
 
