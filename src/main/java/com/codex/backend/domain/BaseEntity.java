@@ -7,15 +7,18 @@ import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
-
 import java.time.Instant;
+import java.util.UUID;
 
+/**
+ * 所有实体的基础字段，统一包含 UUID 主键以及创建/更新时间戳。
+ */
 @MappedSuperclass
 public abstract class BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
@@ -35,7 +38,7 @@ public abstract class BaseEntity {
         this.updatedAt = Instant.now();
     }
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 

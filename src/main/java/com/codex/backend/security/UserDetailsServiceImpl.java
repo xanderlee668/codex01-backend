@@ -4,6 +4,7 @@ import com.codex.backend.domain.user.User;
 import com.codex.backend.repository.UserRepository;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.UUID;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,7 +27,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         return new AuthenticatedUser(user);
     }
 
-    public UserDetails loadUserById(Long id) {
+    public UserDetails loadUserById(UUID id) {
         User user = userRepository
                 .findById(id)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
