@@ -32,8 +32,11 @@ public class ListingController {
      * 获取全部雪板列表，字段与前端的 SampleData 完全对齐。
      */
     @GetMapping
-    public List<ListingResponse> list() {
-        return listingService.fetchAll();
+    public List<ListingResponse> list(@AuthenticationPrincipal AuthenticatedUser principal) {
+        if (principal == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
+        }
+        return listingService.fetchAll(principal.getUser());
     }
 
     /**
