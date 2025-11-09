@@ -49,11 +49,14 @@ mvn spring-boot:run
 
 - `POST /api/auth/register`：注册用户。
 - `POST /api/auth/login`：登录并获取 JWT。
-- `GET /api/tasks`：获取当前用户任务列表。
+- `GET /api/tasks`：获取当前用户任务列表，支持 `completed`、`due_from`、`due_to`、`keyword` 等查询参数。
 - `POST /api/tasks`：创建任务。
 - `GET /api/tasks/{id}`：获取单个任务。
 - `PUT /api/tasks/{id}`：更新任务。
 - `DELETE /api/tasks/{id}`：删除任务。
+- `GET /api/tasks/summary`：统计任务数量、完成情况与提醒数。
+- `GET /api/users/me`：获取当前登录用户资料。
+- `PUT /api/users/me`：更新当前登录用户昵称。
 
 请求需要在 `Authorization` 头中携带 `Bearer <token>`。
 

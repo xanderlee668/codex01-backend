@@ -34,10 +34,15 @@ public class Task extends BaseEntity {
     }
 
     public Task(User owner, String title, String notes, LocalDate dueDate) {
+        this(owner, title, notes, dueDate, false);
+    }
+
+    public Task(User owner, String title, String notes, LocalDate dueDate, boolean completed) {
         this.owner = owner;
         this.title = title;
         this.notes = notes;
         this.dueDate = dueDate;
+        this.completed = completed;
     }
 
     public User getOwner() {

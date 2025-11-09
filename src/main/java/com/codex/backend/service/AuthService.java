@@ -7,6 +7,8 @@ import com.codex.backend.security.UserDetailsServiceImpl.AuthenticatedUser;
 import com.codex.backend.web.dto.AuthResponse;
 import com.codex.backend.web.dto.LoginRequest;
 import com.codex.backend.web.dto.RegisterRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,6 +20,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -47,20 +51,7 @@ public class AuthService {
     }
 
     public AuthResponse authenticate(LoginRequest request) {
-        System.out.println("🧩 尝试登录邮箱: " + request.email());
-        System.out.println("🧩 尝试登录密码: " + request.password());
-
-        // 打印数据库中是否存在该用户，以及密码匹配结果
-        userRepository.findByEmail(request.email())
-                .ifPresentOrElse(
-                        u -> {
-                            System.out.println("🧩 数据库哈希: " + u.getPasswordHash());
-                            System.out.println("🧩 匹配结果: " + passwordEncoder.matches(request.password(), u.getPasswordHash()));
-                        },
-                        () -> System.out.println("🧩 用户不存在！")
-                );
-
-        // 正式认证逻辑
+        log.debug("Attempting authentication for email: {}", request.email());
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
