@@ -18,6 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * 登录/注册业务逻辑，封装用户校验、密码加密、JWT 生成等流程。
+ */
 @Service
 public class AuthService {
 
@@ -39,6 +42,9 @@ public class AuthService {
         this.authenticationManager = authenticationManager;
     }
 
+    /**
+     * 注册用户并立即生成访问令牌。
+     */
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
@@ -50,6 +56,9 @@ public class AuthService {
         return new AuthResponse(token, new AuthResponse.UserSummary(saved.getId(), saved.getEmail(), saved.getDisplayName()));
     }
 
+    /**
+     * 校验登录凭证并返回访问令牌。
+     */
     public AuthResponse authenticate(LoginRequest request) {
         log.debug("Attempting authentication for email: {}", request.email());
         Authentication authentication = authenticationManager.authenticate(
@@ -62,10 +71,4 @@ public class AuthService {
         return new AuthResponse(token, new AuthResponse.UserSummary(user.getId(), user.getEmail(), user.getDisplayName()));
     }
 
-
-    public User requireUser(Long id) {
-        return userRepository
-                .findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-    }
 }

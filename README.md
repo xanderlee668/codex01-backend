@@ -55,6 +55,7 @@ mvn spring-boot:run
 - `PUT /api/tasks/{id}`：更新任务。
 - `DELETE /api/tasks/{id}`：删除任务。
 - `GET /api/tasks/summary`：统计任务数量、完成情况与提醒数。
+- `GET /api/dashboard`：返回首页所需的聚合数据（统计、分类进度、今日/即将任务、快捷入口）。
 - `GET /api/users/me`：获取当前登录用户资料。
 - `PUT /api/users/me`：更新当前登录用户昵称。
 

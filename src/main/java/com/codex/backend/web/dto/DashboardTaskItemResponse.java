@@ -1,13 +1,12 @@
 package com.codex.backend.web.dto;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
 /**
- * 任务详情返回体，字段名称采用 snake_case，直接对应前端 Task 模型。
+ * 首页任务卡片响应，复用 Task 基础字段并补充展示需要的分类与标签。
  */
-public record TaskResponse(
+public record DashboardTaskItemResponse(
         Long id,
         String title,
         String description,
@@ -16,7 +15,4 @@ public record TaskResponse(
         LocalDate dueDate,
         Integer estimatedMinutes,
         List<String> tags,
-        boolean completed,
-        Instant createdAt,
-        Instant updatedAt) {
-}
+        boolean completed) {}

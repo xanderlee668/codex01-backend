@@ -9,6 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * 用户资料服务，封装资料查询与更新逻辑。
+ */
 @Service
 public class UserService {
 
@@ -18,12 +21,18 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
+    /**
+     * 查询当前用户资料。
+     */
     @Transactional(readOnly = true)
     public UserProfileResponse getProfile(User user) {
         User persisted = findUser(user);
         return toResponse(persisted);
     }
 
+    /**
+     * 更新展示名。
+     */
     @Transactional
     public UserProfileResponse updateProfile(User user, UpdateProfileRequest request) {
         User persisted = findUser(user);

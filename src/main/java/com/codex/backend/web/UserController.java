@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * 用户个人资料接口，负责获取与更新当前登录用户的展示名。
+ */
 @RestController
 @RequestMapping("/api/users/me")
 public class UserController {
@@ -23,12 +26,18 @@ public class UserController {
         this.userService = userService;
     }
 
+    /**
+     * 获取当前用户资料。
+     */
     @GetMapping
     public UserProfileResponse getProfile(@AuthenticationPrincipal AuthenticatedUser principal) {
         User user = principal.getUser();
         return userService.getProfile(user);
     }
 
+    /**
+     * 更新当前用户资料，目前支持修改展示名。
+     */
     @PutMapping
     public UserProfileResponse updateProfile(
             @AuthenticationPrincipal AuthenticatedUser principal, @Valid @RequestBody UpdateProfileRequest request) {

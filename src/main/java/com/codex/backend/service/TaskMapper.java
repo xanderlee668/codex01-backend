@@ -11,8 +11,12 @@ public class TaskMapper {
         return new TaskResponse(
                 task.getId(),
                 task.getTitle(),
-                task.getNotes(),
+                task.getDescription(),
+                task.getCategory(),
+                task.getPriority(),
                 task.getDueDate(),
+                task.getEstimatedMinutes(),
+                task.getTags(),
                 task.isCompleted(),
                 task.getCreatedAt(),
                 task.getUpdatedAt());
