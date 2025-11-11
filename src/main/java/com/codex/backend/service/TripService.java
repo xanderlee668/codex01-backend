@@ -69,8 +69,12 @@ public class TripService {
      */
     @Transactional
     public TripResponse createTrip(User organizer, CreateTripRequest request) {
-        TripStatus status = request.status() != null ? TripStatus.fromJson(request.status()) : TripStatus.PLANNED;
-        if (status == null) {
+        TripStatus status;
+        try {
+            status = request.status() == null || request.status().isBlank()
+                    ? TripStatus.PLANNED
+                    : TripStatus.fromJson(request.status());
+        } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Invalid status value");
         }
         Trip trip = new Trip(
