@@ -21,6 +21,13 @@ public enum TripStatus {
         if (normalized.isEmpty()) {
             return null;
         }
-        return TripStatus.valueOf(normalized.toUpperCase());
+        String lowerCased = normalized.toLowerCase();
+        return switch (lowerCased) {
+            case "planned", "planning" -> PLANNED;
+            case "upcoming" -> UPCOMING;
+            case "active", "ongoing" -> ACTIVE;
+            case "completed", "complete" -> COMPLETED;
+            default -> throw new IllegalArgumentException("Unsupported trip status: " + value);
+        };
     }
 }

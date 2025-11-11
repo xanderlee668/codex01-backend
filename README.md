@@ -172,6 +172,9 @@ mvn spring-boot:run
 }
 ```
 
+- `status` 支持 `planned/upcoming/active/completed` 以及兼容前端旧枚举值 `planning/ongoing/complete`，留空或空字符串默认 `planned`。
+- 创建成功返回 201，并附带最新行程详情结构，可直接更新前端列表。
+
 #### 创建行程请求示例
 
 ```json
@@ -181,7 +184,7 @@ mvn spring-boot:run
   "description": "轻松两日行程，适合中级及以上滑手",
   "start_at": "2024-05-24T08:00:00Z",
   "end_at": "2024-05-26T18:00:00Z",
-  "status": "upcoming" // 可省略或留空，默认 planned，可选 planned/upcoming/active/completed
+  "status": "upcoming" // 可省略或留空，默认 planned；同时兼容 planning/ongoing/complete 等别名
 }
 ```
 
