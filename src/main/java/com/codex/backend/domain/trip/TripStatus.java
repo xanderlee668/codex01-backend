@@ -17,6 +17,10 @@ public enum TripStatus {
         if (value == null) {
             return null;
         }
-        return TripStatus.valueOf(value.toUpperCase());
+        String normalized = value.trim();
+        if (normalized.isEmpty()) {
+            return null;
+        }
+        return TripStatus.valueOf(normalized.toUpperCase());
     }
 }
